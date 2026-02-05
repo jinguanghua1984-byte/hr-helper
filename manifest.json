@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "HR Helper - 职位数据加载",
+  "version": "3.0.0",
+  "description": "Chrome扩展，在zhipin.com上自动滚动加载全部职位数据",
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "permissions": ["activeTab", "notifications", "downloads"],
+  "host_permissions": ["https://www.zhipin.com/*", "https://maimai.cn/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://www.zhipin.com/*", "https://maimai.cn/*"],
+      "js": ["content.js"]
+    }
+  ]
+}
