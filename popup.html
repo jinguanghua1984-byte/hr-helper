@@ -1,145 +1,353 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" aria-live="polite">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HR Helper</title>
+  <title>HR Helper - 候选人数据采集工具</title>
   <style>
+    /* ========================================
+       设计令牌系统 (Design Tokens)
+       ======================================== */
+    :root {
+      /* 色彩系统 - Color System */
+      --color-primary-50:  #e8f0fe;
+      --color-primary-100: #d2e3fc;
+      --color-primary-500: #4285f4;
+      --color-primary-600: #3367d6;
+      --color-primary-700: #245bb6;
+
+      --color-success-500: #34a853;
+      --color-success-600: #2d9249;
+      --color-success-700: #1e7e34;
+
+      --color-error-50:   #fce8e6;
+      --color-error-500:  #ea4335;
+      --color-error-600:  #d93025;
+      --color-error-700:  #c5221f;
+
+      --color-warning-500: #fbbc04;
+      --color-warning-600: #f9ab00;
+
+      /* 中性色 - Neutral Colors */
+      --color-gray-50:  #f8f9fa;
+      --color-gray-100: #f1f3f4;
+      --color-gray-200: #e8eaed;
+      --color-gray-300: #dadce0;
+      --color-gray-400: #bdc1c6;
+      --color-gray-500: #80868b;
+      --color-gray-600: #5f6368;
+      --color-gray-700: #3c4043;
+      --color-gray-800: #202124;
+      --color-gray-900: #171717;
+
+      /* 间距系统 - Spacing Scale (4px base unit) */
+      --spacing-0:  0;
+      --spacing-1:  4px;
+      --spacing-2:  8px;
+      --spacing-3:  12px;
+      --spacing-4:  16px;
+      --spacing-5:  20px;
+      --spacing-6:  24px;
+      --spacing-8:  32px;
+      --spacing-10: 40px;
+      --spacing-12: 48px;
+
+      /* 排版系统 - Typography Scale */
+      --font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-family-mono: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace;
+
+      --font-size-xs:   0.75rem;    /* 12px */
+      --font-size-sm:   0.8125rem;  /* 13px */
+      --font-size-base: 0.875rem;   /* 14px */
+      --font-size-md:   1rem;       /* 16px */
+      --font-size-lg:   1.125rem;   /* 18px */
+      --font-size-xl:   1.25rem;    /* 20px */
+
+      --font-weight-normal:  400;
+      --font-weight-medium:  500;
+      --font-weight-semibold: 600;
+      --font-weight-bold:    700;
+
+      --line-height-tight:   1.25;
+      --line-height-normal:  1.5;
+      --line-height-relaxed: 1.75;
+
+      /* 圆角 - Border Radius */
+      --radius-sm:  4px;
+      --radius-md:  8px;
+      --radius-lg:  12px;
+      --radius-xl:  16px;
+      --radius-full: 9999px;
+
+      /* 阴影 - Shadows */
+      --shadow-sm:  0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md:  0 4px 6px -1px rgb(0 0 0 / 0.1);
+      --shadow-lg:  0 10px 15px -3px rgb(0 0 0 / 0.1);
+      --shadow-xl:  0 20px 25px -5px rgb(0 0 0 / 0.1);
+
+      /* 过渡 - Transitions */
+      --transition-fast:   150ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-base:   200ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-slow:   300ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-bounce: 500ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+      /* Z-Index */
+      --z-dropdown:   1000;
+      --z-sticky:     1020;
+      --z-fixed:      1030;
+      --z-modal-backdrop: 1040;
+      --z-modal:      1050;
+      --z-popover:    1060;
+      --z-tooltip:    1070;
+    }
+
+    /* ========================================
+       全局重置与基础样式
+       ======================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
     body {
-      width: 320px;
-      padding: 15px;
+      width: min(100vw - 32px, 400px);
+      min-width: 280px;
+      max-width: 600px;
       margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: #f5f5f5;
+      padding: var(--spacing-4);
+      font-family: var(--font-family-base);
+      font-size: var(--font-size-base);
+      line-height: var(--line-height-normal);
+      color: var(--color-gray-800);
+      background-color: var(--color-gray-50);
       overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
+    /* 焦点可见性 - WCAG 2.4.7 */
+    :focus-visible {
+      outline: 2px solid var(--color-primary-500);
+      outline-offset: 2px;
+    }
+
+    /* 减少动画偏好 - WCAG 2.3.3 */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* ========================================
+       排版
+       ======================================== */
     h1 {
-      margin: 0 0 12px 0;
-      font-size: 16px;
-      color: #333;
+      margin: 0 0 var(--spacing-3) 0;
+      font-size: var(--font-size-lg);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-gray-900);
       text-align: center;
+      letter-spacing: -0.011em;
     }
 
+    /* ========================================
+       卡片组件
+       ======================================== */
     .section {
       background-color: #fff;
-      border-radius: 8px;
-      padding: 12px;
-      margin-bottom: 12px;
+      border-radius: var(--radius-md);
+      padding: var(--spacing-3);
+      margin-bottom: var(--spacing-3);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--color-gray-200);
     }
 
-    /* 加载职位区域 */
+    /* ========================================
+       状态指示器
+       ======================================== */
     .load-status {
-      margin-bottom: 10px;
-      padding: 10px;
-      background-color: #f8f9fa;
-      border-radius: 6px;
-      font-size: 12px;
+      margin-bottom: var(--spacing-2);
+      padding: var(--spacing-2) var(--spacing-3);
+      background-color: var(--color-gray-50);
+      border-radius: var(--radius-md);
+      font-size: var(--font-size-sm);
+      border: 1px solid var(--color-gray-200);
     }
 
     .status-line {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 5px;
+      align-items: center;
+      margin-bottom: var(--spacing-1);
     }
 
     .status-line:last-child {
       margin-bottom: 0;
     }
 
+    /* Loading Spinner - 修复：添加 role 和 aria-label */
     .loading-spinner {
       display: inline-block;
       width: 14px;
       height: 14px;
-      border: 2px solid #f3f3f3;
-      border-top: 2px solid #4285f4;
-      border-radius: 50%;
+      border: 2px solid var(--color-gray-200);
+      border-top-color: var(--color-primary-500);
+      border-radius: var(--radius-full);
       animation: spin 1s linear infinite;
       vertical-align: middle;
-      margin-right: 5px;
+      margin-right: var(--spacing-1);
     }
 
     @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      to { transform: rotate(360deg); }
     }
 
     .not-available {
-      color: #999;
+      color: var(--color-gray-500);
       font-style: italic;
     }
 
-    /* 按钮样式 */
+    /* ========================================
+       按钮组件
+       ======================================== */
     button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-1);
       width: 100%;
-      padding: 10px;
-      background-color: #4285f4;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 13px;
+      padding: var(--spacing-2) var(--spacing-4);
+      font-family: var(--font-family-base);
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-medium);
+      line-height: 1;
+      color: #fff;
+      background-color: var(--color-primary-500);
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
       cursor: pointer;
-      transition: background-color 0.2s;
+      transition: all var(--transition-base);
+      text-decoration: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
     button:hover:not(:disabled) {
-      background-color: #3367d6;
+      background-color: var(--color-primary-600);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
     }
 
     button:active:not(:disabled) {
-      background-color: #245bb6;
+      background-color: var(--color-primary-700);
+      box-shadow: var(--shadow-sm);
+      transform: translateY(0);
     }
 
     button:disabled {
-      background-color: #ccc;
+      background-color: var(--color-gray-300);
+      color: var(--color-gray-500);
       cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    button:focus-visible {
+      outline: 2px solid var(--color-primary-500);
+      outline-offset: 2px;
     }
 
     .collect-btn {
-      background-color: #34a853;
+      background-color: var(--color-success-500);
     }
 
     .collect-btn:hover:not(:disabled) {
-      background-color: #2d9249;
+      background-color: var(--color-success-600);
     }
 
-    /* 数据列表 */
+    .collect-btn:active:not(:disabled) {
+      background-color: var(--color-success-700);
+    }
+
+    .icon-button {
+      width: auto;
+      padding: var(--spacing-1);
+      background: transparent;
+      color: var(--color-gray-600);
+      border: none;
+    }
+
+    .icon-button:hover:not(:disabled) {
+      background-color: var(--color-gray-100);
+      color: var(--color-gray-900);
+      box-shadow: none;
+      transform: none;
+    }
+
+    /* ========================================
+       列表组件
+       ======================================== */
     .candidate-list {
-      max-height: 350px;
+      max-height: 400px;
       overflow-y: auto;
       background-color: #fff;
-      border-radius: 6px;
-      padding: 8px;
+      border-radius: var(--radius-md);
+      padding: var(--spacing-2);
+      border: 1px solid var(--color-gray-200);
+    }
+
+    /* 自定义滚动条 */
+    .candidate-list::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .candidate-list::-webkit-scrollbar-track {
+      background: var(--color-gray-50);
+      border-radius: var(--radius-full);
+    }
+
+    .candidate-list::-webkit-scrollbar-thumb {
+      background: var(--color-gray-400);
+      border-radius: var(--radius-full);
+    }
+
+    .candidate-list::-webkit-scrollbar-thumb:hover {
+      background: var(--color-gray-500);
     }
 
     .candidate-item {
-      padding: 10px;
-      border-bottom: 1px solid #f0f0f0;
+      padding: var(--spacing-2) var(--spacing-3);
+      border-radius: var(--radius-sm);
       cursor: pointer;
-      transition: background-color 0.2s;
-    }
-
-    .candidate-item:last-child {
-      border-bottom: none;
+      transition: all var(--transition-fast);
+      border: 1px solid transparent;
     }
 
     .candidate-item:hover {
-      background-color: #f8f9fa;
+      background-color: var(--color-primary-50);
+      border-color: var(--color-primary-100);
+    }
+
+    .candidate-item:focus {
+      outline: 2px solid var(--color-primary-500);
+      outline-offset: -2px;
     }
 
     .candidate-name {
-      font-weight: bold;
-      font-size: 13px;
-      color: #333;
-      margin-bottom: 6px;
+      font-weight: var(--font-weight-semibold);
+      font-size: var(--font-size-base);
+      color: var(--color-gray-900);
+      margin-bottom: var(--spacing-1);
     }
 
     .candidate-info {
-      font-size: 11px;
-      color: #666;
+      font-size: var(--font-size-xs);
+      color: var(--color-gray-600);
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: var(--spacing-1);
     }
 
     .candidate-info span {
@@ -147,151 +355,288 @@
       justify-content: space-between;
     }
 
-    .candidate-info span:last-child {
-      font-weight: 500;
-    }
-
-    /* 详情面板 */
+    /* ========================================
+       详情面板
+       ======================================== */
     .detail-panel {
       position: fixed;
-      top: 0;
-      right: -100%;
+      inset: 0;
       width: 100%;
-      max-width: 350px;
-      height: 100%;
-      background-color: white;
-      box-shadow: -2px 0 8px rgba(0,0,0,0.1);
-      z-index: 1000;
-      transition: right 0.3s ease;
+      max-width: min(100vw, 450px);
+      height: 100vh;
+      background-color: #fff;
+      box-shadow: var(--shadow-xl);
+      z-index: var(--z-modal);
+      transform: translateX(100%);
+      transition: transform var(--transition-slow);
       overflow-y: auto;
+      display: flex;
+      flex-direction: column;
     }
 
     .detail-panel.show {
-      right: 0;
+      transform: translateX(0);
+    }
+
+    /* 遮罩层 */
+    .detail-backdrop {
+      position: fixed;
+      inset: 0;
+      background-color: rgb(0 0 0 / 0.5);
+      z-index: var(--z-modal-backdrop);
+      opacity: 0;
+      visibility: hidden;
+      transition: all var(--transition-base);
+    }
+
+    .detail-backdrop.show {
+      opacity: 1;
+      visibility: visible;
     }
 
     .detail-header {
       position: sticky;
       top: 0;
-      background-color: white;
-      padding: 12px;
-      border-bottom: 1px solid #f0f0f0;
+      background-color: #fff;
+      padding: var(--spacing-3);
+      border-bottom: 1px solid var(--color-gray-200);
       display: flex;
       justify-content: space-between;
       align-items: center;
+      z-index: var(--z-sticky);
+      box-shadow: var(--shadow-sm);
     }
 
     .detail-title {
-      font-size: 14px;
-      font-weight: bold;
+      font-size: var(--font-size-md);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-gray-900);
     }
 
     .detail-close {
-      width: 24px;
-      height: 24px;
-      border: none;
-      background: none;
-      cursor: pointer;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       padding: 0;
-      font-size: 20px;
+      font-size: 24px;
+      color: var(--color-gray-600);
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .detail-close:hover {
+      background-color: var(--color-gray-100);
+      color: var(--color-gray-900);
     }
 
     .detail-content {
-      padding: 12px;
+      padding: var(--spacing-3);
+      flex: 1;
     }
 
     .detail-field {
       display: flex;
-      margin-bottom: 6px;
-      font-size: 12px;
+      margin-bottom: var(--spacing-2);
+      font-size: var(--font-size-sm);
+      gap: var(--spacing-2);
     }
 
     .detail-field-label {
       width: 90px;
-      color: #666;
+      color: var(--color-gray-600);
       flex-shrink: 0;
+      font-weight: var(--font-weight-medium);
     }
 
     .detail-field-value {
       flex: 1;
-      color: #333;
-      word-break: break-all;
+      color: var(--color-gray-900);
+      word-break: break-word;
     }
 
+    /* 时间线组件 */
     .timeline-item {
-      padding: 8px;
-      border-left: 2px solid #e0e0e0;
-      margin-left: 8px;
-      margin-bottom: 8px;
+      position: relative;
+      padding-left: var(--spacing-4);
+      margin-bottom: var(--spacing-3);
+    }
+
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 6px;
+      width: 8px;
+      height: 8px;
+      background-color: var(--color-primary-500);
+      border-radius: var(--radius-full);
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 2px var(--color-primary-100);
+    }
+
+    .timeline-item::after {
+      content: '';
+      position: absolute;
+      left: 3px;
+      top: 14px;
+      width: 2px;
+      height: calc(100% + 4px);
+      background-color: var(--color-gray-200);
     }
 
     .timeline-item:last-child {
       margin-bottom: 0;
     }
 
+    .timeline-item:last-child::after {
+      display: none;
+    }
+
     .timeline-time {
-      font-size: 11px;
-      color: #666;
-      margin-bottom: 4px;
+      font-size: var(--font-size-xs);
+      color: var(--color-gray-500);
+      margin-bottom: var(--spacing-1);
+      font-weight: var(--font-weight-medium);
     }
 
     .timeline-content {
-      font-size: 12px;
-      color: #333;
+      font-size: var(--font-size-sm);
+      color: var(--color-gray-800);
+      line-height: var(--line-height-relaxed);
     }
 
-    /* 分页 */
+    /* ========================================
+       分页组件
+       ======================================== */
     .pagination {
-      margin-top: 12px;
+      margin-top: var(--spacing-3);
       display: flex;
       justify-content: center;
-      gap: 10px;
+      gap: var(--spacing-2);
     }
 
     .pagination button {
-      padding: 6px 14px;
-      font-size: 13px;
-      background-color: #4285f4;
+      padding: var(--spacing-1) var(--spacing-3);
+      font-size: var(--font-size-sm);
+      background-color: var(--color-primary-500);
       color: white;
       border: none;
-      border-radius: 6px;
+      border-radius: var(--radius-md);
       cursor: pointer;
-      transition: background-color 0.2s;
+      transition: all var(--transition-base);
       width: auto;
     }
 
     .pagination button:hover:not(:disabled) {
-      background-color: #3367d6;
+      background-color: var(--color-primary-600);
     }
 
     .pagination button:disabled {
-      background-color: #ccc;
+      background-color: var(--color-gray-300);
       cursor: not-allowed;
+      opacity: 0.6;
     }
 
     .page-info {
-      font-size: 11px;
-      color: #666;
+      font-size: var(--font-size-xs);
+      color: var(--color-gray-600);
       text-align: center;
-      margin-bottom: 8px;
+      margin-bottom: var(--spacing-2);
+      margin-top: var(--spacing-2);
     }
 
+    /* ========================================
+       空状态
+       ======================================== */
     .empty {
       text-align: center;
-      padding: 20px;
-      color: #999;
-      font-size: 13px;
+      padding: var(--spacing-8);
+      color: var(--color-gray-500);
+      font-size: var(--font-size-sm);
+    }
+
+    .empty::before {
+      content: '📋';
+      display: block;
+      font-size: 48px;
+      margin-bottom: var(--spacing-3);
+      opacity: 0.5;
+    }
+
+    /* ========================================
+       状态标签
+       ======================================== */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-1);
+      padding: var(--spacing-1) var(--spacing-2);
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-medium);
+      border-radius: var(--radius-full);
+      line-height: 1;
+    }
+
+    .status-badge--success {
+      background-color: var(--color-success-50);
+      color: var(--color-success-700);
+    }
+
+    .status-badge--error {
+      background-color: var(--color-error-50);
+      color: var(--color-error-700);
+    }
+
+    .status-badge--warning {
+      background-color: #fff8e1;
+      color: #f57c00;
+    }
+
+    .status-badge--info {
+      background-color: var(--color-primary-50);
+      color: var(--color-primary-700);
+    }
+
+    /* ========================================
+       响应式优化
+       ======================================== */
+    @media (max-width: 360px) {
+      body {
+        padding: var(--spacing-2);
+      }
+
+      .section {
+        padding: var(--spacing-2);
+      }
+
+      h1 {
+        font-size: var(--font-size-md);
+      }
+    }
+
+    /* 高对比度模式支持 */
+    @media (prefers-contrast: high) {
+      :root {
+        --color-gray-200: #000;
+        --color-gray-500: #000;
+      }
     }
   </style>
 </head>
 <body>
+  <!-- 主标题 -->
   <h1>📊 HR Helper</h1>
 
   <!-- 职位数据加载区域 -->
-  <div class="section">
-    <div class="load-status">
+  <div class="section" role="region" aria-labelledby="job-loading-title">
+    <div class="load-status" role="status" aria-live="polite">
       <div class="status-line">
-        <span>状态:</span>
+        <span id="loadStatusLabel">状态:</span>
         <span id="loadStatus" class="not-available">不在zhipin.com</span>
       </div>
       <div class="status-line">
@@ -299,35 +644,92 @@
         <span id="loadCount">0</span>
       </div>
     </div>
-    <button id="loadAllBtn" disabled>加载全部职位</button>
+    <button
+      id="loadAllBtn"
+      disabled
+      aria-label="加载全部职位数据"
+      aria-describedby="loadStatus"
+    >
+      加载全部职位
+    </button>
   </div>
 
   <!-- 人选数据区域 -->
-  <div class="section">
-    <!-- 采集按钮 -->
-    <button id="loadCandidatesBtn" class="collect-btn">采集人选数据</button>
+  <div class="section" role="region" aria-labelledby="candidate-title">
+    <button
+      id="loadCandidatesBtn"
+      class="collect-btn"
+      aria-label="采集当前页面的候选人数据"
+    >
+      采集人选数据
+    </button>
 
-    <!-- 数据列表 -->
-    <div class="candidate-list" id="candidateList">
+    <!-- 候选人列表 -->
+    <div
+      class="candidate-list"
+      id="candidateList"
+      role="listbox"
+      aria-label="候选人列表"
+      tabindex="0"
+    >
       <div class="empty">点击"采集人选数据"开始采集</div>
     </div>
 
-    <!-- 分页 -->
-    <div class="pagination">
-      <button id="prevBtn" disabled>上一页</button>
-      <button id="nextBtn" disabled>下一页</button>
+    <!-- 分页控件 -->
+    <nav class="pagination" role="navigation" aria-label="分页导航">
+      <button
+        id="prevBtn"
+        disabled
+        aria-label="上一页"
+        rel="prev"
+      >
+        ← 上一页
+      </button>
+      <button
+        id="nextBtn"
+        disabled
+        aria-label="下一页"
+        rel="next"
+      >
+        下一页 →
+      </button>
+    </nav>
+    <div class="page-info" id="pageInfo" role="status" aria-live="polite">
+      第 0 页 / 共 0 页
     </div>
-    <div class="page-info" id="pageInfo">第 0 页 / 共 0 页</div>
   </div>
 
+  <!-- 详情面板遮罩 -->
+  <div
+    class="detail-backdrop"
+    id="detailBackdrop"
+    aria-hidden="true"
+  ></div>
+
   <!-- 详情面板 -->
-  <div class="detail-panel" id="detailPanel">
-    <div class="detail-header">
-      <div class="detail-title" id="detailTitle"></div>
-      <button class="detail-close" id="detailCloseBtn">×</button>
+  <aside
+    class="detail-panel"
+    id="detailPanel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="detailTitle"
+    aria-hidden="true"
+  >
+    <header class="detail-header">
+      <h2 class="detail-title" id="detailTitle">候选人详情</h2>
+      <button
+        class="detail-close"
+        id="detailCloseBtn"
+        aria-label="关闭详情面板"
+        type="button"
+      >
+        ✕
+      </button>
+    </header>
+    <div class="detail-content" id="detailContent" tabindex="-1">
+      <!-- 动态内容 -->
     </div>
-    <div class="detail-content" id="detailContent"></div>
-  </div>
+  </aside>
 
   <script src="popup.js"></script>
 </body>

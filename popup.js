@@ -34,6 +34,7 @@ const dom = {
   nextBtn: document.getElementById('nextBtn'),
   pageInfo: document.getElementById('pageInfo'),
   detailPanel: document.getElementById('detailPanel'),
+  detailBackdrop: document.getElementById('detailBackdrop'),
   detailTitle: document.getElementById('detailTitle'),
   detailContent: document.getElementById('detailContent'),
   detailCloseBtn: document.getElementById('detailCloseBtn')
@@ -483,11 +484,13 @@ function showCandidateDetail(index) {
   `;
 
   dom.detailPanel.classList.add('show');
+  dom.detailBackdrop.classList.add('show');
 }
 
 // 关闭详情面板
 function closeDetail() {
   dom.detailPanel.classList.remove('show');
+  dom.detailBackdrop.classList.remove('show');
 }
 
 // 分页控制
@@ -539,6 +542,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // 详情关闭按钮
   dom.detailCloseBtn.addEventListener('click', closeDetail);
 
+  // 点击遮罩层关闭详情面板
+  dom.detailBackdrop.addEventListener('click', closeDetail);
+
   // 候选人列表点击（事件委托）
   dom.candidateList.addEventListener('click', (e) => {
     const item = e.target.closest('.candidate-item');
@@ -547,6 +553,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!isNaN(index)) {
         showCandidateDetail(index);
       }
+    }
+  });
+
+  // ESC 键关闭详情面板
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && dom.detailPanel.classList.contains('show')) {
+      closeDetail();
     }
   });
 });
